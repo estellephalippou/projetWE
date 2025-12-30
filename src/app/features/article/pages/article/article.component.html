@@ -36,9 +36,39 @@
     <div class="container page">
       <div class="row article-content">
         <div class="col-md-12">
+          <div class="card mt-4">
+            <div class="card-body">
+              <h5 class="card-title">Traduire l'article</h5>
+
+              <div class="form-inline mb-2">
+                <select class="form-control form-control-sm mr-2" [(ngModel)]="selectedLang">
+                  <option value="fr">Français</option>
+                  <option value="en">English</option>
+                  <option value="es">Español</option>
+                  <option value="de">Deutsch</option>
+                </select>
+
+                <button class="btn btn-sm btn-outline-primary" (click)="translateArticle()" [disabled]="isTranslating">
+                  Ok
+                </button>
+              </div>
+
+              @if (isTranslating) {
+                <p class="text-muted">Traduction en cours...</p>
+              }
+
+              @if (translatedBody) {
+                <hr />
+                <h6>Article traduit</h6>
+                <div [innerHTML]="translatedBody | markdown | async"></div>
+              }
+            </div>
+          </div>
+          <!-- CONTENU ORIGINAL -->
           <div [innerHTML]="article.body | markdown | async"></div>
 
-          <ul class="tag-list">
+          <!-- TAGS -->
+          <ul class="tag-list mt-3">
             @for (tag of article.tagList; track tag) {
               <li class="tag-default tag-pill tag-outline">
                 {{ tag }}
@@ -102,8 +132,9 @@
           </div>
 
           <div *ifAuthenticated="false">
-            <a [routerLink]="['/login']">Sign in</a> or <a [routerLink]="['/register']">sign up</a> to add comments on
-            this article.
+            <a [routerLink]="['/login']">Sign in</a> or
+            <a [routerLink]="['/register']">sign up</a>
+            to add comments on this article.
           </div>
 
           @for (comment of comments; track comment) {

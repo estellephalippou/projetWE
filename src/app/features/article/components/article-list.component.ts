@@ -1,4 +1,5 @@
 import { Component, DestroyRef, inject, Input } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { ArticlesService } from '../services/articles.service';
 import { ArticleListConfig } from '../models/article-list-config.model';
 import { Article } from '../models/article.model';
@@ -10,13 +11,23 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 @Component({
   selector: 'app-article-list',
   template: `
+    <div>
+      <label>{{ titleLabel }}</label>
+      <select [(ngModel)]="titleLang" class="form-control form-control-sm">
+        <option value="fr">FR</option>
+        <option value="en">EN</option>
+        <option value="es">ES</option>
+        <option value="de">DE</option>
+      </select>
+    </div>
+
     @if (loading === LoadingState.LOADING) {
       <div class="article-preview">Loading articles...</div>
     }
 
     @if (loading === LoadingState.LOADED) {
       @for (article of results; track article.slug) {
-        <app-article-preview [article]="article" />
+        <app-article-preview [article]="article" [titleLang]="titleLang" [translateTitle]="titleLang !== 'en'" />
       } @empty {
         <div class="article-preview">No articles are here... yet.</div>
       }
@@ -34,7 +45,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
       </nav>
     }
   `,
-  imports: [ArticlePreviewComponent, NgClass],
+  imports: [FormsModule, ArticlePreviewComponent, NgClass],
   styles: `
     .page-link {
       cursor: pointer;
@@ -49,6 +60,22 @@ export class ArticleListComponent {
   loading = LoadingState.NOT_LOADED;
   LoadingState = LoadingState;
   destroyRef = inject(DestroyRef);
+
+  titleLang: 'fr' | 'en' | 'es' | 'de' = 'en';
+
+  get titleLabel(): string {
+    switch (this.titleLang) {
+      case 'en':
+        return 'Title language:';
+      case 'es':
+        return 'Idioma del título:';
+      case 'de':
+        return 'Titelsprache:';
+      case 'fr':
+      default:
+        return 'Langue des titres :';
+    }
+  }
 
   @Input() limit!: number;
   @Input()
@@ -71,7 +98,6 @@ export class ArticleListComponent {
     this.loading = LoadingState.LOADING;
     this.results = [];
 
-    // Create limit and offset filter (if necessary)
     if (this.limit) {
       this.query.filters.limit = this.limit;
       this.query.filters.offset = this.limit * (this.currentPage - 1);
@@ -83,8 +109,6 @@ export class ArticleListComponent {
       .subscribe(data => {
         this.loading = LoadingState.LOADED;
         this.results = data.articles;
-
-        // Used from http://www.jstips.co/en/create-range-0...n-easily-using-one-line/
         this.totalPages = Array.from(new Array(Math.ceil(data.articlesCount / this.limit)), (val, index) => index + 1);
       });
   }
